@@ -1,6 +1,6 @@
 <?php
 // SPDX-License-Identifier: MIT
-namespace GlpiPlugin\Techbell;
+namespace GlpiPlugin\Pellissarinotification;
 
 use CommonDBTM;
 use CommonITILActor;
@@ -20,7 +20,7 @@ final class Events
         } catch (\Throwable $e) {
             // A notification failure must not prevent saving the business ticket.
             // Never log ticket/comment contents or database statements here.
-            Toolbox::logInFile('techbell', 'Notification hook failed: ' . get_class($e) . "\n");
+            Toolbox::logInFile('pellissarinotification', 'Notification hook failed: ' . get_class($e) . "\n");
         }
     }
     public static function userAssigned(CommonDBTM $item): void

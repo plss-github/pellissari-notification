@@ -1,4 +1,4 @@
-# Validação executada - TechBell 0.1.1
+# Validação executada - Pellissari Notification 0.1.2
 
 Data: 09/09/2026.
 

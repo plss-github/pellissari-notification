@@ -1,10 +1,10 @@
 <?php
 // Isolated unit tests with in-memory doubles. NOT GLPI/MySQL integration tests.
 require __DIR__ . '/bootstrap.php';
-use GlpiPlugin\Techbell\Access;
-use GlpiPlugin\Techbell\Events;
-use GlpiPlugin\Techbell\Settings;
-use GlpiPlugin\Techbell\Store;
+use GlpiPlugin\Pellissarinotification\Access;
+use GlpiPlugin\Pellissarinotification\Events;
+use GlpiPlugin\Pellissarinotification\Settings;
+use GlpiPlugin\Pellissarinotification\Store;
 use Symfony\Component\HttpFoundation\Request;
 $tests=0;
 set_error_handler(static function($level,$message,$file,$line): never { throw new ErrorException($message,0,$level,$file,$line); });
@@ -21,7 +21,7 @@ ok('root admin can configure',Access::isAdmin());
 Session::$entities=[1];ok('entity-only administrator cannot configure global rules',!Access::isAdmin());Session::$entities=[0,1,2];
 ok('GET mutation rejected',throws(fn()=>Access::post(new Request('GET'))));
 ok('POST without plugin CSRF rejected',throws(fn()=>Access::post(new Request('POST'))));
-$csrf=Access::csrf();Access::post(new Request('POST',['_techbell_csrf'=>$csrf]));ok('valid POST passes independent CSRF check',true);
+$csrf=Access::csrf();Access::post(new Request('POST',['_pellissarinotification_csrf'=>$csrf]));ok('valid POST passes independent CSRF check',true);
 Events::userAssigned(actorLink(Ticket_User::class,11,1));ok('requester link is not an assignment',count(rows())===0);
 Events::userAssigned(actorLink(Ticket_User::class,11));ok('direct assignment only reaches assigned user',count(rows())===1&&rows()[0]['users_id']===2);
 Events::userAssigned(actorLink(Ticket_User::class,11));ok('repeated actor hook is idempotent',count(rows())===1);
@@ -68,8 +68,8 @@ $upto=max(array_column(rows(),'id'));Store::emit(101,'user_assigned',[2],'new-af
 (new Store())->markAllRead(0,$upto);$last=end($DB->tables[Store::TABLE]);ok('read-all does not consume events newer than high-water mark',$last['read_at']===null);
 ok('no hidden hook failures occurred',count(Toolbox::$logs)===0);
 Session::$id=1;Session::$admin=true;Session::$entities=[0,1,2];
-ob_start();\GlpiPlugin\Techbell\View::admin(Settings::get());$html=ob_get_clean();
-ok('admin UI has four self-test controls',substr_count($html,'class="tb-btn tb-btn-quiet tb-test"')===4);
-ok('admin UI carries native and plugin CSRF tokens',str_contains($html,'name="_glpi_csrf_token"')&&str_contains($html,'name="_techbell_csrf"'));
-require dirname(__DIR__).'/hook.php';plugin_techbell_install();ok('idempotent install uses three private tables',count($DB->sql)===3);
+ob_start();\GlpiPlugin\Pellissarinotification\View::admin(Settings::get());$html=ob_get_clean();
+ok('admin UI has four self-test controls',substr_count($html,'class="pn-btn pn-btn-quiet pn-test"')===4);
+ok('admin UI carries native and plugin CSRF tokens',str_contains($html,'name="_glpi_csrf_token"')&&str_contains($html,'name="_pellissarinotification_csrf"'));
+require dirname(__DIR__).'/hook.php';plugin_pellissarinotification_install();ok('idempotent install uses three private tables',count($DB->sql)===3);
 echo "\nAll $tests isolated checks passed. No live GLPI or SQL server was used.\n";

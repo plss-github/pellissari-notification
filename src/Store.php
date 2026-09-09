@@ -1,6 +1,6 @@
 <?php
 // SPDX-License-Identifier: MIT
-namespace GlpiPlugin\Techbell;
+namespace GlpiPlugin\Pellissarinotification;
 
 use CommonITILActor;
 use ITILFollowup;
@@ -9,7 +9,7 @@ use Ticket;
 
 final class Store
 {
-    public const TABLE = 'glpi_plugin_techbell_notifications';
+    public const TABLE = 'glpi_plugin_pellissarinotification_notifications';
     private array $ticketCache = [];
     private array $followupCache = [];
     private array $groupCache = [];

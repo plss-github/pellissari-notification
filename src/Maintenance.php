@@ -1,12 +1,12 @@
 <?php
 // SPDX-License-Identifier: MIT
-namespace GlpiPlugin\Techbell;
+namespace GlpiPlugin\Pellissarinotification;
 final class Maintenance extends \CommonDBTM
 {
-    public static function getTypeName($nb = 0): string { return 'TechBell'; }
+    public static function getTypeName($nb = 0): string { return 'Pellissari Notification'; }
     public static function cronInfo($name): array
     {
-        return ['description' => 'Limpar histórico TechBell conforme a retenção configurada.'];
+        return ['description' => 'Limpar histórico Pellissari Notification conforme a retenção configurada.'];
     }
     public static function cronPurge($task): int
     {

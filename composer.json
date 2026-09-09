@@ -1,5 +1,5 @@
 {
-  "name": "techbell/techbell",
+  "name": "plss-github/pellissari-notification",
   "description": "GLPI 11 technician notification center",
   "type": "glpi-plugin",
   "license": "MIT",
@@ -8,7 +8,7 @@
   },
   "autoload": {
     "psr-4": {
-      "GlpiPlugin\\Techbell\\": "src/"
+      "GlpiPlugin\\Pellissarinotification\\": "src/"
     }
   },
   "homepage": "https://github.com/KawanCostaNs",

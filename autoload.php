@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // The GLPI loader also supports this namespace. This fallback keeps install/tests self-contained.
 spl_autoload_register(static function (string $class): void {
-    $prefix = 'GlpiPlugin\\Techbell\\';
+    $prefix = 'GlpiPlugin\\Pellissarinotification\\';
     if (!str_starts_with($class, $prefix)) {
         return;
     }

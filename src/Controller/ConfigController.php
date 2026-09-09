@@ -1,11 +1,11 @@
 <?php
 // SPDX-License-Identifier: MIT
-namespace GlpiPlugin\Techbell\Controller;
+namespace GlpiPlugin\Pellissarinotification\Controller;
 
 use Glpi\Controller\AbstractController;
-use GlpiPlugin\Techbell\Access;
-use GlpiPlugin\Techbell\Settings;
-use GlpiPlugin\Techbell\View;
+use GlpiPlugin\Pellissarinotification\Access;
+use GlpiPlugin\Pellissarinotification\Settings;
+use GlpiPlugin\Pellissarinotification\View;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ConfigController extends AbstractController
 {
-    #[Route('/Config', name: 'techbell_config', methods: ['GET', 'POST'])]
+    #[Route('/Config', name: 'pellissarinotification_config', methods: ['GET', 'POST'])]
     public function __invoke(Request $request): Response
     {
         Access::admin();
@@ -29,7 +29,7 @@ final class ConfigController extends AbstractController
         }
         ob_start();
         try {
-            \Html::header('TechBell', $request->getPathInfo(), 'config', \GlpiPlugin\Techbell\Menu::class);
+            \Html::header('Pellissari Notification', $request->getPathInfo(), 'config', \GlpiPlugin\Pellissarinotification\Menu::class);
             View::admin(Settings::get(), $error, $request->query->getInt('saved') === 1);
             \Html::footer();
             $html = ob_get_clean();

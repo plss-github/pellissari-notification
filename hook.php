@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT
 require_once __DIR__ . '/autoload.php';
 
-function plugin_techbell_install(): bool
+function plugin_pellissarinotification_install(): bool
 {
     global $DB;
     $tables = [
-        'glpi_plugin_techbell_configs' => "
+        'glpi_plugin_pellissarinotification_configs' => "
             `id` int unsigned NOT NULL,
             `enabled` tinyint NOT NULL DEFAULT 1,
             `poll_interval` int NOT NULL DEFAULT 10,
@@ -22,14 +22,14 @@ function plugin_techbell_install(): bool
             `color_status_changed` varchar(7) NOT NULL DEFAULT '#D97706',
             `color_requester_comment` varchar(7) NOT NULL DEFAULT '#7C3AED',
             PRIMARY KEY (`id`)",
-        'glpi_plugin_techbell_userrules' => "
+        'glpi_plugin_pellissarinotification_userrules' => "
             `id` int unsigned NOT NULL AUTO_INCREMENT,
             `users_id` int unsigned NOT NULL,
             `event_type` varchar(32) NOT NULL,
             `enabled` tinyint NOT NULL,
             PRIMARY KEY (`id`),
             UNIQUE KEY `user_event` (`users_id`, `event_type`)",
-        'glpi_plugin_techbell_notifications' => "
+        'glpi_plugin_pellissarinotification_notifications' => "
             `id` int unsigned NOT NULL AUTO_INCREMENT,
             `users_id` int unsigned NOT NULL,
             `entities_id` int unsigned NOT NULL DEFAULT 0,
@@ -57,23 +57,23 @@ function plugin_techbell_install(): bool
     foreach ($tables as $name => $schema) {
         $DB->doQuery("CREATE TABLE IF NOT EXISTS `$name` ($schema) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
-    if (!count($DB->request(['FROM' => 'glpi_plugin_techbell_configs', 'WHERE' => ['id' => 1]]))) {
-        $DB->insert('glpi_plugin_techbell_configs', GlpiPlugin\Techbell\Settings::defaults());
+    if (!count($DB->request(['FROM' => 'glpi_plugin_pellissarinotification_configs', 'WHERE' => ['id' => 1]]))) {
+        $DB->insert('glpi_plugin_pellissarinotification_configs', GlpiPlugin\Pellissarinotification\Settings::defaults());
     }
-    CronTask::register(GlpiPlugin\Techbell\Maintenance::class, 'Purge', DAY_TIMESTAMP, [
+    CronTask::register(GlpiPlugin\Pellissarinotification\Maintenance::class, 'Purge', DAY_TIMESTAMP, [
         'state' => CronTask::STATE_WAITING,
         'mode' => CronTask::MODE_EXTERNAL,
-        'comment' => 'TechBell: remover notificações fora da retenção configurada.',
+        'comment' => 'Pellissari Notification: remover notificações fora da retenção configurada.',
     ]);
     return true;
 }
-function plugin_techbell_uninstall(): bool
+function plugin_pellissarinotification_uninstall(): bool
 {
     global $DB;
     // Uninstall is destructive; deactivation alone preserves all plugin data.
-    CronTask::unregister('techbell');
+    CronTask::unregister('pellissarinotification');
     foreach (['notifications', 'userrules', 'configs'] as $suffix) {
-        $DB->doQuery('DROP TABLE IF EXISTS `glpi_plugin_techbell_' . $suffix . '`');
+        $DB->doQuery('DROP TABLE IF EXISTS `glpi_plugin_pellissarinotification_' . $suffix . '`');
     }
     return true;
 }

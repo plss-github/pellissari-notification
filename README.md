@@ -1,4 +1,4 @@
-# TechBell 0.1.1 - GLPI 11
+# Pellissari Notification 0.1.2 - GLPI 11
 
 Plugin desenvolvido para GLPI 11, com central de notificações para técnicos, histórico e regras administrativas.
 
@@ -33,17 +33,17 @@ A tela administrativa exige interface central, direito de atualizar configuraç�
 ## Instalação
 
 1. Faça backup do banco e dos arquivos do GLPI antes da instalação.
-2. Extraia o ZIP. Copie a pasta **techbell** para a pasta **plugins** da instalação, sem renomear. A estrutura deve ser `SEU_GLPI/plugins/techbell/setup.php`, e não `plugins/techbell/techbell/setup.php`.
+2. Extraia o ZIP. Copie a pasta **pellissarinotification** para a pasta **plugins** da instalação, sem renomear. A estrutura deve ser `SEU_GLPI/plugins/pellissarinotification/setup.php`, e não `plugins/pellissarinotification/pellissarinotification/setup.php`.
 3. Conceda ao usuário do PHP/servidor web leitura dos arquivos e acesso aos diretórios. O plugin não exige escrita em seu próprio diretório. Não use permissão 777.
-4. Entre no GLPI com Super-Admin na entidade raiz. Na administração de plugins, instale e ative **TechBell - Central de notificações**.
-5. Atualize a página. Abra **Configurar > TechBell**, ou o botão **Configurar** do próprio sininho. A rota relativa e `/plugins/techbell/Config`; preserve um eventual prefixo de subdiretório da sua instalação.
+4. Entre no GLPI com Super-Admin na entidade raiz. Na administração de plugins, instale e ative **Pellissari Notification - Central de notificações**.
+5. Atualize a página. Abra **Configurar > Pellissari Notification**, ou o botão **Configurar** do próprio sininho. A rota relativa e `/plugins/pellissarinotification/Config`; preserve um eventual prefixo de subdiretório da sua instalação.
 6. Use os quatro botões **Testar para mim** para conferir as cores e a exibição dos alertas. Depois ajuste as regras e habilite **Ativar notificações reais** conforme necessário.
-7. Confira a ação automática **Purge**, do tipo TechBell, em **Configurar > Ações automáticas**. Foi registrada em modo externo, com frequência diária; a exclusão física depende do cron do GLPI funcionando. A entrega dos avisos não depende desse cron.
+7. Confira a ação automática **Purge**, do tipo Pellissari Notification, em **Configurar > Ações automáticas**. Foi registrada em modo externo, com frequência diária; a exclusão física depende do cron do GLPI funcionando. A entrega dos avisos não depende desse cron.
 
 Instalação por arquivo no servidor, caso o seu GLPI esteja em `/var/www/glpi` (ajuste os caminhos):
 
 ```bash
-sudo unzip /tmp/techbell-0.1.1.zip -d /var/www/glpi/plugins
+sudo unzip /tmp/pellissari-notification-0.1.2.zip -d /var/www/glpi/plugins
 ```
 
 Não e necessário editar o core nem executar SQL manualmente. Se a rota não aparecer depois de instalar/ativar, limpe o cache pelo procedimento da sua instalação e recarregue a página. Não altere permissões ou a configuração de produção sem diagnóstico.
@@ -86,18 +86,18 @@ Para repetir os testes isolados, em uma cópia de desenvolvimento:
 ```bash
 php tests/run.php
 find . -name '*.php' -print0 | xargs -0 -n 1 php -l
-node --check public/js/techbell.js
+node --check public/js/pellissarinotification.js
 ```
 
 `tests/bootstrap.php` contém dublos exclusivos para testes. Não o inclua no bootstrap do GLPI.
 
 ## Desativação, desinstalação e diagnóstico
 
-**Desativar** preserva as tabelas, configurações e histórico. **Desinstalar apaga as três tabelas do TechBell**, incluindo suas preferências e histórico, sem apagar chamados do GLPI. Faça backup antes de desinstalar.
+**Desativar** preserva as tabelas, configurações e histórico. **Desinstalar apaga as três tabelas do Pellissari Notification**, incluindo suas preferências e histórico, sem apagar chamados do GLPI. Faça backup antes de desinstalar.
 
-Tabelas: `glpi_plugin_techbell_configs`, `glpi_plugin_techbell_userrules` e `glpi_plugin_techbell_notifications`.
+Tabelas: `glpi_plugin_pellissarinotification_configs`, `glpi_plugin_pellissarinotification_userrules` e `glpi_plugin_pellissarinotification_notifications`.
 
-Erros capturados pelos hooks vão ao log `techbell` do GLPI; verifique também os logs PHP/SQL da instância. No navegador, verifique as respostas de `/plugins/techbell/Feed`, `/History`, `/Token` e `/Action`, sem compartilhar cookies ou tokens. API e páginas administrativas enviam `Cache-Control: no-store, private`; um proxy/CDN não deve sobrescrever isso ou armazenar respostas autenticadas.
+Erros capturados pelos hooks vão ao log `pellissarinotification` do GLPI; verifique também os logs PHP/SQL da instância. No navegador, verifique as respostas de `/plugins/pellissarinotification/Feed`, `/History`, `/Token` e `/Action`, sem compartilhar cookies ou tokens. API e páginas administrativas enviam `Cache-Control: no-store, private`; um proxy/CDN não deve sobrescrever isso ou armazenar respostas autenticadas.
 
 ## Referências técnicas consultadas (09/09/2026)
 

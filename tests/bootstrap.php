@@ -82,7 +82,7 @@ namespace {
         }
         public function insert(string $table, array $data): bool {
             $id = $data['id'] ?? (empty($this->tables[$table]) ? 1 : max(array_keys($this->tables[$table]))+1);
-            if ($table === 'glpi_plugin_techbell_notifications') {
+            if ($table === 'glpi_plugin_pellissarinotification_notifications') {
                 foreach ($this->tables[$table] ?? [] as $old) {
                     if ($old['users_id']===$data['users_id'] && $old['event_key']===$data['event_key']) throw new \RuntimeException('Duplicate key');
                 }
@@ -117,7 +117,7 @@ namespace {
     function fixture(): void {
         global $DB;
         $DB=new FakeDB();
-        $DB->insert(\GlpiPlugin\Techbell\Settings::TABLE,\GlpiPlugin\Techbell\Settings::defaults());
+        $DB->insert(\GlpiPlugin\Pellissarinotification\Settings::TABLE,\GlpiPlugin\Pellissarinotification\Settings::defaults());
         foreach ([1,2,3,4,5,6] as $id) $DB->insert('glpi_users',['id'=>$id,'is_active'=>$id===5?0:1,'is_deleted'=>0,'name'=>'user'.$id,'firstname'=>'User','realname'=>(string)$id]);
         $DB->insert('glpi_profiles',['id'=>1,'interface'=>'central']);$DB->insert('glpi_profiles',['id'=>2,'interface'=>'helpdesk']);
         foreach ([1,2,3,4,5,6] as $id) $DB->insert('glpi_profiles_users',['users_id'=>$id,'profiles_id'=>in_array($id,[4,6],true)?2:1]);
@@ -129,7 +129,7 @@ namespace {
         $DB->insert('glpi_groups_tickets',['id'=>21,'tickets_id'=>101,'groups_id'=>7,'type'=>2]);
         foreach ([2,3,3,5,6] as $id) $DB->insert('glpi_groups_users',['groups_id'=>7,'users_id'=>$id]);
         Session::$id=1;Session::$admin=true;Session::$entities=[0,1,2];Session::$visible=[101,102];Session::$interface='central';
-        \GlpiPlugin\Techbell\Settings::reset();\GlpiPlugin\Techbell\Store::resetCaches();Toolbox::$logs=[];
+        \GlpiPlugin\Pellissarinotification\Settings::reset();\GlpiPlugin\Pellissarinotification\Store::resetCaches();Toolbox::$logs=[];
     }
     fixture();
 }

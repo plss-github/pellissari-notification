@@ -1,11 +1,11 @@
 <?php
 // SPDX-License-Identifier: MIT
-namespace GlpiPlugin\Techbell;
+namespace GlpiPlugin\Pellissarinotification;
 
 final class Settings
 {
-    public const TABLE = 'glpi_plugin_techbell_configs';
-    public const RULES = 'glpi_plugin_techbell_userrules';
+    public const TABLE = 'glpi_plugin_pellissarinotification_configs';
+    public const RULES = 'glpi_plugin_pellissarinotification_userrules';
     public const TYPES = [
         'group_assigned' => 'Chamado atribuído ao grupo',
         'user_assigned' => 'Chamado atribuído a pessoa',

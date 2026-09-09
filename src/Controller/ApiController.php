@@ -1,11 +1,11 @@
 <?php
 // SPDX-License-Identifier: MIT
-namespace GlpiPlugin\Techbell\Controller;
+namespace GlpiPlugin\Pellissarinotification\Controller;
 
 use Glpi\Controller\AbstractController;
-use GlpiPlugin\Techbell\Access;
-use GlpiPlugin\Techbell\Settings;
-use GlpiPlugin\Techbell\Store;
+use GlpiPlugin\Pellissarinotification\Access;
+use GlpiPlugin\Pellissarinotification\Settings;
+use GlpiPlugin\Pellissarinotification\Store;
 use Session;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,7 +17,7 @@ final class ApiController extends AbstractController
     {
         return new JsonResponse($data, $status, ['Cache-Control' => 'no-store, private', 'X-Content-Type-Options' => 'nosniff']);
     }
-    #[Route('/Feed', name: 'techbell_feed', methods: ['GET'])]
+    #[Route('/Feed', name: 'pellissarinotification_feed', methods: ['GET'])]
     public function feed(): JsonResponse
     {
         $user = Access::user();
@@ -30,7 +30,7 @@ final class ApiController extends AbstractController
             'unread' => $store->unreadStats(), 'pending' => $store->pending(),
         ]);
     }
-    #[Route('/History', name: 'techbell_history', methods: ['GET'])]
+    #[Route('/History', name: 'pellissarinotification_history', methods: ['GET'])]
     public function history(Request $request): JsonResponse
     {
         Access::user();
@@ -39,7 +39,7 @@ final class ApiController extends AbstractController
                 $request->query->getString('type'), $request->query->getBoolean('unread')));
         } catch (\InvalidArgumentException $e) { return $this->json(['error' => $e->getMessage()], 400); }
     }
-    #[Route('/Token', name: 'techbell_token', methods: ['GET'])]
+    #[Route('/Token', name: 'pellissarinotification_token', methods: ['GET'])]
     public function token(): JsonResponse
     {
         Access::user();
@@ -47,7 +47,7 @@ final class ApiController extends AbstractController
     }
     // GET is intentionally listed for the GLPI <11.0.7 route-matching bug.
     // Access::post() rejects every non-POST request BEFORE any mutation.
-    #[Route('/Action', name: 'techbell_action', methods: ['GET', 'POST'])]
+    #[Route('/Action', name: 'pellissarinotification_action', methods: ['GET', 'POST'])]
     public function action(Request $request): JsonResponse
     {
         Access::user(); Access::post($request);
@@ -64,11 +64,11 @@ final class ApiController extends AbstractController
                     return $this->json($store->markAllRead($request->request->getInt('after'), $request->request->getInt('upto')));
                 case 'test':
                     Access::admin();
-                    if (time() < (int) ($_SESSION['techbell_next_test'] ?? 0)) {
+                    if (time() < (int) ($_SESSION['pellissarinotification_next_test'] ?? 0)) {
                         return $this->json(['error' => 'Aguarde três segundos entre os testes.'], 429);
                     }
                     $item = $store->createTest($request->request->getString('type'), $request->request->getString('color'));
-                    $_SESSION['techbell_next_test'] = time() + 3;
+                    $_SESSION['pellissarinotification_next_test'] = time() + 3;
                     return $this->json(['item' => $item]);
                 case 'user_rules':
                     Access::admin();
@@ -79,7 +79,7 @@ final class ApiController extends AbstractController
             }
         } catch (\InvalidArgumentException $e) { return $this->json(['error' => $e->getMessage()], 400); }
     }
-    #[Route('/Users', name: 'techbell_users', methods: ['GET'])]
+    #[Route('/Users', name: 'pellissarinotification_users', methods: ['GET'])]
     public function users(Request $request): JsonResponse
     {
         global $DB;
@@ -99,7 +99,7 @@ final class ApiController extends AbstractController
         }
         return $this->json(['items' => $items]);
     }
-    #[Route('/UserRules', name: 'techbell_user_rules', methods: ['GET'])]
+    #[Route('/UserRules', name: 'pellissarinotification_user_rules', methods: ['GET'])]
     public function userRules(Request $request): JsonResponse
     {
         Access::admin();
