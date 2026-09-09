@@ -1,0 +1,21 @@
+{
+  "name": "techbell/techbell",
+  "description": "GLPI 11 technician notification center",
+  "type": "glpi-plugin",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "GlpiPlugin\\Techbell\\": "src/"
+    }
+  },
+  "homepage": "https://github.com/KawanCostaNs",
+  "authors": [
+    {
+      "name": "Kawan Costa",
+      "homepage": "https://github.com/KawanCostaNs"
+    }
+  ]
+}

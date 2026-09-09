@@ -1,0 +1,75 @@
+<?php
+// Isolated unit tests with in-memory doubles. NOT GLPI/MySQL integration tests.
+require __DIR__ . '/bootstrap.php';
+use GlpiPlugin\Techbell\Access;
+use GlpiPlugin\Techbell\Events;
+use GlpiPlugin\Techbell\Settings;
+use GlpiPlugin\Techbell\Store;
+use Symfony\Component\HttpFoundation\Request;
+$tests=0;
+set_error_handler(static function($level,$message,$file,$line): never { throw new ErrorException($message,0,$level,$file,$line); });
+function ok(string $label,bool $result): void { global $tests; if (!$result) { throw new RuntimeException('FAIL: '.$label); } $tests++;echo "PASS $tests - $label\n"; }
+function throws(callable $fn): bool { try {$fn();return false;} catch(Throwable) {return true;} }
+function rows(): array { global $DB; return array_values($DB->tables[Store::TABLE]??[]); }
+function actorLink(string $class,int $id,int $type=2): CommonDBTM {global $DB; $x=new $class();$table=$class===Ticket_User::class?'glpi_tickets_users':'glpi_groups_tickets';$x->fields=$DB->tables[$table][$id];$x->fields['type']=$type;return $x;}
+ok('four configurable event types',count(Settings::TYPES)===4);
+ok('hex colors normalized',Settings::validateColor('#aabbcc')==='#AABBCC');
+ok('CSS injection rejected',throws(fn()=>Settings::validateColor('red; background:url(x)')));
+ok('unknown event type rejected',throws(fn()=>Settings::validateType('admin_broadcast')));
+ok('invalid polling interval rejected',throws(fn()=>Settings::normalize(array_replace(Settings::defaults(),['poll_interval'=>1]))));
+ok('root admin can configure',Access::isAdmin());
+Session::$entities=[1];ok('entity-only administrator cannot configure global rules',!Access::isAdmin());Session::$entities=[0,1,2];
+ok('GET mutation rejected',throws(fn()=>Access::post(new Request('GET'))));
+ok('POST without plugin CSRF rejected',throws(fn()=>Access::post(new Request('POST'))));
+$csrf=Access::csrf();Access::post(new Request('POST',['_techbell_csrf'=>$csrf]));ok('valid POST passes independent CSRF check',true);
+Events::userAssigned(actorLink(Ticket_User::class,11,1));ok('requester link is not an assignment',count(rows())===0);
+Events::userAssigned(actorLink(Ticket_User::class,11));ok('direct assignment only reaches assigned user',count(rows())===1&&rows()[0]['users_id']===2);
+Events::userAssigned(actorLink(Ticket_User::class,11));ok('repeated actor hook is idempotent',count(rows())===1);
+Events::groupAssigned(actorLink(Group_Ticket::class,21));ok('group distribution excludes inactive and helpdesk-only users and duplicates',count(rows())===3);
+$t=new Ticket();$t->getFromDB(101);Events::ticketAdded($t);ok('born-assigned fallback does not duplicate actor notifications',count(rows())===3);
+$t->updates=['priority'];$t->oldvalues=[];Events::ticketUpdated($t);ok('unrelated ticket changes ignored',count(rows())===3);
+$t->updates=['status'];$t->oldvalues=['status'=>2];Events::ticketUpdated($t);ok('unchanged status ignored',count(rows())===3);
+$t->oldvalues=['status'=>1];Events::ticketUpdated($t);ok('status change reaches direct assignee only',count(rows())===4&&end($DB->tables[Store::TABLE])['users_id']===2);
+$f=new ITILFollowup();$f->fields=['id'=>31,'itemtype'=>'Ticket','items_id'=>101,'users_id'=>4,'is_private'=>0];$DB->insert('glpi_itilfollowups',$f->fields);
+Events::followupAdded($f);ok('public requester comment notifies direct assignee',count(rows())===5);
+Events::followupAdded($f);ok('same followup cannot create duplicates',count(rows())===5);
+$f->fields['id']=32;$f->fields['is_private']=1;Events::followupAdded($f);ok('private comments excluded',count(rows())===5);
+$f->fields['is_private']=0;$f->fields['users_id']=3;Events::followupAdded($f);ok('technician comment is not requester comment',count(rows())===5);
+$f->fields['users_id']=4;$f->fields['itemtype']='Problem';Events::followupAdded($f);ok('problem followup cannot leak into ticket with same numeric ID',count(rows())===5);
+Settings::saveOverrides(2,array_fill_keys(array_keys(Settings::TYPES),0));
+Store::emit(101,'user_assigned',[2],'suppressed');ok('per-user disabled rules block new records',count(rows())===5);
+Settings::saveOverrides(2,array_fill_keys(array_keys(Settings::TYPES),-1));ok('inherit removes per-user overrides',Settings::overrides(2)['user_assigned']===-1);
+$DB->update(Settings::TABLE,['enabled_user_assigned'=>0],['id'=>1]);Settings::reset();
+Settings::saveOverrides(2,array_replace(array_fill_keys(array_keys(Settings::TYPES),-1),['user_assigned'=>1]));
+Store::emit(101,'user_assigned',[2],'override-enable');ok('individual enable overrides event default',count(rows())===6);
+$DB->update(Settings::TABLE,['enabled'=>0],['id'=>1]);Settings::reset();Store::emit(101,'user_assigned',[2],'master-disabled');
+ok('master switch overrides individual enable',count(rows())===6);
+$test=(new Store())->createTest('user_assigned','#ff00aa');ok('self-test works when real notifications disabled',count(rows())===7&&$test['test']&&$test['color']==='#FF00AA');
+$storedTest=end($DB->tables[Store::TABLE]);ok('test recipient is server-session admin only',$storedTest['users_id']===1&&$storedTest['tickets_id']===0);
+Session::$id=2;Session::$admin=false;Session::$entities=[1];Session::$visible=[101];
+ok('technician cannot generate admin test',throws(fn()=>(new Store())->createTest('user_assigned')));
+ok('technician cannot view admin test',(new Store())->present($storedTest)===null);
+$mine=rows()[0];$foreign=rows()[2];ok('own notification visible',(new Store())->present($mine)!==null);
+ok('other user notification hidden',(new Store())->present($foreign)===null);
+(new Store())->markRead($foreign['id']);ok('IDOR read mutation does not affect other user',$DB->tables[Store::TABLE][$foreign['id']]['read_at']===null);
+$DB->update(Settings::TABLE,['enabled'=>1,'enabled_user_assigned'=>1],['id'=>1]);Settings::reset();
+$claimed=(new Store())->claim([$mine['id']]);$second=(new Store())->claim([$mine['id']]);ok('atomic toast claim only succeeds once',count($claimed)===1&&count($second)===0);
+Session::$visible=[];ok('revoked ticket rights hide existing history',(new Store())->present($mine)===null);
+Session::$visible=[101];Session::$entities=[2];ok('active-entity restriction checked at display',(new Store())->present($mine)===null);Session::$entities=[1];
+$comment=array_values(array_filter(rows(),fn($r)=>$r['event_type']==='requester_comment'))[0];$DB->tables['glpi_itilfollowups'][31]['is_private']=1;
+ok('followup made private later is hidden',(new Store())->present($comment)===null);$DB->tables['glpi_itilfollowups'][31]['is_private']=0;
+$stats=(new Store())->unreadStats();ok('unread count excludes other users and tests',$stats['count']===5);
+(new Store())->markRead($mine['id']);ok('mark-read stores both read and toast flags',$DB->tables[Store::TABLE][$mine['id']]['read_at']!==null&&$DB->tables[Store::TABLE][$mine['id']]['toast_at']!==null);
+Session::$id=1;Session::$admin=true;Session::$entities=[0,1,2];
+$DB->update(Settings::TABLE,['suppress_self'=>1],['id'=>1]);Settings::reset();$before=count(rows());Store::emit(101,'user_assigned',[1],'self-action');ok('optional self-action suppression works',count(rows())===$before);
+Session::$id=2;Session::$admin=false;Session::$entities=[1];
+$history=(new Store())->history();ok('history filters by owner and ACL',count($history['items'])===5);
+$upto=max(array_column(rows(),'id'));Store::emit(101,'user_assigned',[2],'new-after-highwater',['actor_id'=>1]);
+(new Store())->markAllRead(0,$upto);$last=end($DB->tables[Store::TABLE]);ok('read-all does not consume events newer than high-water mark',$last['read_at']===null);
+ok('no hidden hook failures occurred',count(Toolbox::$logs)===0);
+Session::$id=1;Session::$admin=true;Session::$entities=[0,1,2];
+ob_start();\GlpiPlugin\Techbell\View::admin(Settings::get());$html=ob_get_clean();
+ok('admin UI has four self-test controls',substr_count($html,'class="tb-btn tb-btn-quiet tb-test"')===4);
+ok('admin UI carries native and plugin CSRF tokens',str_contains($html,'name="_glpi_csrf_token"')&&str_contains($html,'name="_techbell_csrf"'));
+require dirname(__DIR__).'/hook.php';plugin_techbell_install();ok('idempotent install uses three private tables',count($DB->sql)===3);
+echo "\nAll $tests isolated checks passed. No live GLPI or SQL server was used.\n";
